@@ -1,0 +1,57 @@
+# ─────────────────────────────────────────────────────────────
+# requirements.txt  —  ForestWatch AI (Upgraded v2)
+# Compatible with Python 3.12 on Windows 64-bit
+# Run:  pip install -r requirements.txt
+# ─────────────────────────────────────────────────────────────
+
+# Core geospatial
+rasterio
+geopandas
+pyproj
+shapely
+xarray
+numpy
+scipy
+
+# Satellite data download
+sentinelsat>=1.2.1
+pystac-client
+
+# Machine Learning
+torch
+torchvision
+segmentation-models-pytorch
+scikit-learn
+albumentations
+
+# Explainable AI (Grad-CAM / Saliency Maps)
+captum
+
+# ONNX Model Optimization
+onnx
+onnxruntime
+
+# Visualization & Dashboard
+streamlit
+folium
+matplotlib
+plotly
+streamlit-folium
+pydeck
+
+# Dashboard UI Enhancements
+streamlit-lottie
+requests
+
+# Alerting
+twilio
+sendgrid
+
+# Utilities
+pandas
+tqdm
+python-dotenv
+Pillow
+opencv-python
+imageio
+imageio-ffmpeg

@@ -1,0 +1,198 @@
+/* ADMRS  Global Stylesheet v4.0 */
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow:wght@300;400;600;700&family=Barlow+Condensed:wght@400;600;700&display=swap');
+
+/*  Base  */
+html,body,[class*="css"]{
+  background:#0b0e17!important;color:#c9d1d9!important;
+  font-family:'Barlow',sans-serif!important;}
+.main>.block-container{padding:0!important;max-width:100%!important;}
+div.block-container{padding-top:0!important;padding-bottom:0!important;}
+
+/*  Chrome removal  */
+#MainMenu,footer,.stDeployButton,
+[data-testid="stToolbar"],[data-testid="stDecoration"]{display:none!important;}
+header[data-testid="stHeader"]{
+  background:transparent!important;height:0!important;overflow:visible!important;}
+
+/*  Sidebar base  */
+section[data-testid="stSidebar"]{
+  background:#080b12!important;
+  border-right:1px solid #1a2035!important;
+  min-width:260px!important;max-width:260px!important;
+  transform:none!important;visibility:visible!important;
+}
+section[data-testid="stSidebar"]>div:first-child{padding:0!important;}
+section[data-testid="stSidebar"] .block-container{
+  padding:0 0 20px!important;
+  /* no top padding - our spacer div handles it */}
+section[data-testid="stSidebar"] [data-testid="stVerticalBlock"]{gap:0!important;}
+
+/*  Nuke ALL Streamlit wrapper padding/margin inside sidebar  */
+section[data-testid="stSidebar"] [data-testid="stVerticalBlock"]>div{
+  padding:0!important;margin:0!important;}
+section[data-testid="stSidebar"] iframe{
+  display:block!important;margin:0!important;padding:0!important;border:none!important;}
+
+/*  Fix nav radio  no wrapping, single line, no radio dot  */
+div[data-testid="stSidebar"] .stRadio>div>label{
+  white-space:nowrap!important;overflow:hidden!important;
+  text-overflow:ellipsis!important;max-width:260px!important;
+  padding:8px 14px!important;line-height:1.25!important;}
+div[data-testid="stSidebar"] .stRadio>div>label input{
+  display:none!important;width:0!important;height:0!important;}
+
+
+/*  Nav radio  */
+div[data-testid="stSidebar"] .stRadio>div{gap:0!important;}
+div[data-testid="stSidebar"] .stRadio label{display:none!important;}
+div[data-testid="stSidebar"] .stRadio>div>label{
+  display:flex!important;align-items:center!important;
+  padding:10px 16px!important;border-radius:0!important;margin:0!important;
+  font-size:12px!important;font-weight:600!important;color:#8899b4!important;
+  background:transparent!important;border:none!important;
+  border-left:3px solid transparent!important;cursor:pointer!important;
+  letter-spacing:.01em!important;transition:all .15s ease!important;
+  white-space:nowrap!important;}
+div[data-testid="stSidebar"] .stRadio>div>label:hover{
+  background:#0e1420!important;color:#8892a4!important;
+  border-left-color:#7d8fa8!important;}
+div[data-testid="stSidebar"] .stRadio>div>label:has(input:checked){
+  background:linear-gradient(90deg,#0d2218 0%,transparent 100%)!important;
+  color:#3fb950!important;border-left-color:#3fb950!important;}
+div[data-testid="stSidebar"] .stRadio>div>label>div:first-child{display:none!important;}
+
+/*  Sidebar text/dividers  */
+div[data-testid="stSidebar"] p{
+  font-size:8px!important;color:#7d8fa8!important;letter-spacing:.16em!important;
+  text-transform:uppercase!important;padding:10px 16px 4px!important;margin:0!important;
+  font-family:'Share Tech Mono',monospace!important;}
+div[data-testid="stSidebar"] hr{
+  border:none!important;border-top:1px solid #111827!important;margin:4px 0!important;}
+
+/*  Tighten column gaps inside sidebar  */
+div[data-testid="stSidebar"] [data-testid="stHorizontalBlock"]{
+  gap:6px!important;padding:0 14px!important;}
+
+/*  Kill ALL Streamlit sidebar arrow/toggle variants  */
+[data-testid="collapsedControl"]{
+  display:none!important;width:0!important;height:0!important;
+  overflow:hidden!important;position:absolute!important;left:-9999px!important;}
+[data-testid="stSidebarCollapsedControl"]{
+  display:none!important;width:0!important;height:0!important;}
+button[data-testid="baseButton-header"]{
+  display:none!important;width:0!important;height:0!important;}
+[data-testid="stBaseButton-header"]{display:none!important;}
+[class*="collapsedControl"]{display:none!important;}
+[class*="SidebarCollapse"]{display:none!important;}
+[class*="sidebarButton"]{display:none!important;}
+button[kind="header"]{display:none!important;}
+/* Chevron SVG icons */
+svg[data-testid="chevronRight"]{display:none!important;}
+svg[data-testid="chevronLeft"]{display:none!important;}
+/* The arrow wrapper is always the FIRST direct child div of the sidebar section
+   that contains only a button  target it structurally */
+section[data-testid="stSidebar"] > div:first-child > div:first-child > button{
+  display:none!important;width:0!important;height:0!important;}
+/* Also hide by aria-label */
+button[aria-label*="Sidebar"]{display:none!important;}
+button[aria-label*="sidebar"]{display:none!important;}
+button[aria-label*="collapse"]{display:none!important;}
+button[aria-label*="Collapse"]{display:none!important;}
+button[aria-label*="Close sidebar"]{display:none!important;}
+
+/*  Form controls  */
+.stTextInput>div>div>input{
+  background:#0e1420!important;border:1px solid #1a2035!important;
+  color:#e6edf3!important;border-radius:4px!important;font-size:13px!important;}
+.stTextArea>div>div>textarea{
+  background:#0e1420!important;border:1px solid #1a2035!important;
+  color:#e6edf3!important;border-radius:4px!important;font-size:12px!important;}
+.stSelectbox [data-baseweb="select"]>div{
+  background:#0e1420!important;border:1px solid #1a2035!important;border-radius:4px!important;}
+.stSelectbox [data-baseweb="select"] span{color:#c9d1d9!important;}
+
+/*  File uploader  */
+[data-testid="stFileUploader"]{
+  background:#0e1420!important;border:1px dashed #2d3a52!important;
+  border-radius:6px!important;}
+[data-testid="stFileUploader"] label{color:#8899b4!important;font-size:12px!important;}
+
+/*  Buttons  */
+.stButton>button{
+  background:#0e1420!important;color:#8892a4!important;
+  border:1px solid #1a2035!important;border-radius:4px!important;
+  font-size:12px!important;font-weight:600!important;letter-spacing:.04em!important;
+  padding:8px 14px!important;width:100%!important;transition:all .15s!important;
+  font-family:'Barlow',sans-serif!important;}
+.stButton>button:hover{
+  background:#111827!important;border-color:#3fb950!important;color:#3fb950!important;}
+div.dispatch-btn .stButton>button{
+  background:#071a0f!important;color:#3fb950!important;border-color:#1a4028!important;}
+div.dispatch-btn .stButton>button:hover{
+  background:#0d2318!important;border-color:#3fb950!important;}
+div.verify-btn .stButton>button{
+  background:#070f1a!important;color:#58a6ff!important;border-color:#1a2840!important;}
+div.verify-btn .stButton>button:hover{
+  background:#0d1a2e!important;border-color:#58a6ff!important;}
+div.danger-btn .stButton>button{
+  background:#1a070a!important;color:#f85149!important;border-color:#3a1020!important;}
+div.active-btn .stButton>button{
+  background:#071a0f!important;color:#3fb950!important;
+  border-color:#3fb950!important;box-shadow:0 0 8px rgba(63,185,80,0.2)!important;}
+
+/*  Scrollbar  */
+::-webkit-scrollbar{width:3px;height:3px;}
+::-webkit-scrollbar-track{background:#080b12;}
+::-webkit-scrollbar-thumb{background:#1a2035;border-radius:3px;}
+
+/*  Plotly  */
+[data-testid="stPlotlyChart"]{border-radius:6px;overflow:hidden;}
+
+/*  Expander  */
+[data-testid="stExpander"]{
+  background:#0e1420!important;border:1px solid #1a2035!important;border-radius:4px!important;}
+[data-testid="stExpander"] summary{
+  color:#8899b4!important;font-size:12px!important;font-weight:600!important;}
+
+/*  Progress bar  */
+.stProgress > div > div > div > div{background:#3fb950!important;}
+
+/*  ANIMATIONS  */
+@keyframes blink{
+  0%,100%{opacity:1;box-shadow:0 0 8px #f85149;}
+  50%{opacity:.1;box-shadow:none;}}
+@keyframes shimmer{
+  0%{background-position:-200% 0;}
+  100%{background-position:200% 0;}}
+@keyframes counter-up{
+  from{opacity:0;transform:translateY(6px);}
+  to{opacity:1;transform:translateY(0);}}
+@keyframes fade-in{from{opacity:0;}to{opacity:1;}}
+@keyframes slide-in{
+  from{opacity:0;transform:translateX(-8px);}
+  to{opacity:1;transform:translateX(0);}}
+
+.kpi-val{animation:counter-up .5s ease both;}
+.fade-in{animation:fade-in .4s ease both;}
+.slide-in{animation:slide-in .3s ease both;}
+
+/*  SKELETON LOADER  */
+.skeleton{
+  background:linear-gradient(90deg,#0e1420 25%,#1a2035 50%,#0e1420 75%);
+  background-size:200% 100%;
+  animation:shimmer 1.4s ease-in-out infinite;
+  border-radius:4px;}
+.skeleton-text{height:12px;margin:6px 0;}
+.skeleton-block{height:80px;margin:4px 0;}
+.skeleton-chart{height:200px;margin:4px 0;}
+
+/*  CORRELATION BADGE  */
+.corr-pos{color:#f85149;font-weight:700;}
+.corr-neg{color:#3fb950;font-weight:700;}
+
+/*  Responsive tweaks  */
+@media (max-width:1024px){
+  section[data-testid="stSidebar"]{
+    min-width:200px!important;max-width:200px!important;}
+  .main>.block-container{padding:0 4px!important;}
+}
