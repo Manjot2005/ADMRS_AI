@@ -4,6 +4,7 @@ Extracted from app.py for modularity and caching.
 """
 import numpy as np
 import pandas as pd
+from io import StringIO
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import streamlit as st
@@ -28,7 +29,7 @@ def _rgba(hex_col: str, alpha: float) -> str:
 # ══════════════════════════════════════════════════════════════════
 def build_main_map(df_json: str, layer_mode: str = "deforestation",
                    pulse_alpha: float = 0.25):
-    df = pd.read_json(df_json)
+    df = pd.read_json(StringIO(df_json), orient='records')
     clat = float(df["lat"].mean())
     clon = float(df["lon"].mean())
 
