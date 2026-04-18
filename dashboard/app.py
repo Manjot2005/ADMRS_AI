@@ -258,12 +258,7 @@ components.html("""<script>
   setInterval(function(){
     var el = doc.getElementById('fw-clock');
     if(el){ var n=new Date(); el.textContent=n.toISOString().replace('T',' ').slice(0,19)+' UTC'; }
-    var cd = doc.getElementById('sat-countdown');
-    if(cd){
-      var now=new Date(), e=(now.getMinutes()%47)*60+now.getSeconds();
-      var r=47*60-e, m=Math.floor(r/60), s=r%60;
-      cd.textContent='T-'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
-    }
+    // sat countdown now handled by self-contained JS inside the sidebar iframe
   },1000);
 })();
 </script>""", height=0)
@@ -544,14 +539,30 @@ html,body{{background:#080b12;overflow:hidden;font-family:'Share Tech Mono',mono
   </div>
 </div>
 
-<!-- SATELLITE -->
+<!-- SATELLITE — countdown JS runs inside this iframe -->
 <div style="padding:10px 14px;border-bottom:1px solid #1a2035;">
   <div class="lbl">◈ NEXT SATELLITE PASS</div>
   <div style="font-size:26px;font-weight:700;color:#58a6ff;letter-spacing:.04em;line-height:1;"
-    id="sat-countdown">T-00:47</div>
+    id="sat-cd">T-00:47</div>
   <div style="font-size:7.5px;color:#8899b4;margin-top:5px;">Sentinel-2 · Orbit 145 · MSI-L2A</div>
   <div style="font-size:7.5px;color:#7d8fa8;margin-top:2px;">Amazon Basin AOI · 1.2M km2</div>
 </div>
+<script>
+(function(){{
+  var ORBIT_SEC = 47 * 60;
+  function tick(){{
+    var now = new Date();
+    var elapsed = (now.getMinutes() % 47) * 60 + now.getSeconds();
+    var remain  = ORBIT_SEC - elapsed;
+    var m = Math.floor(remain / 60);
+    var s = remain %% 60;
+    var el = document.getElementById('sat-cd');
+    if(el) el.textContent = 'T-' + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+  }}
+  tick();
+  setInterval(tick, 1000);
+}})();
+</script>
 
 <!-- DATA LAYER -->
 <div style="padding:9px 14px;border-bottom:1px solid #1a2035;">
@@ -655,7 +666,7 @@ if PAGE=="Situational":
                 f'color:#7d8fa8;letter-spacing:.12em;">◈ MAP LAYER:</span></div>',
                 unsafe_allow_html=True)
     l1,l2,l3,l4,_=st.columns([1,1,1,1,4],gap="small")
-    for co,lbl,key in [(l1,"Deforestation","deforestation"),(l2,"📊 NDVI","ndvi"),
+    for co,lbl,key in [(l1,"🌳 Deforestation","deforestation"),(l2,"📊 NDVI","ndvi"),
                         (l3,"🌡 Thermal","thermal"),(l4,"🔥 Heatmap","heatmap")]:
         active=(st.session_state.layer==key)
         co.markdown(f'<div class="{"active-btn" if active else "verify-btn"}">', unsafe_allow_html=True)
