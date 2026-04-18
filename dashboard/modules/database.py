@@ -7,8 +7,14 @@ from pathlib import Path
 from datetime import datetime
 from contextlib import contextmanager
 
-DB_PATH = Path(__file__).parent.parent.parent / "outputs" / "admrs.db"
-DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+import os as _os
+# On Streamlit Cloud the repo is read-only; use /tmp which is always writable.
+# Locally, use the outputs/ folder next to the project root.
+if _os.getenv("STREAMLIT_SHARING_MODE") or _os.getenv("HOME", "").startswith("/home/adminuser"):
+    DB_PATH = Path("/tmp/admrs.db")
+else:
+    DB_PATH = Path(__file__).parent.parent.parent / "outputs" / "admrs.db"
+    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
 
 # ── Connection context manager ─────────────────────────────────────
 @contextmanager
