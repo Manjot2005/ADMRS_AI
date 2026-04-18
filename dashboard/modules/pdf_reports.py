@@ -16,20 +16,21 @@ try:
     from reportlab.platypus import (SimpleDocTemplate, Paragraph, Spacer,
                                      Table, TableStyle, HRFlowable)
     from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
+    # ── Colour palette (only defined when reportlab is available) ───
+    C_BG      = colors.HexColor("#0b0e17")
+    C_DARK    = colors.HexColor("#0e1420")
+    C_GREEN   = colors.HexColor("#3fb950")
+    C_RED     = colors.HexColor("#f85149")
+    C_AMBER   = colors.HexColor("#d29922")
+    C_BLUE    = colors.HexColor("#58a6ff")
+    C_LIGHT   = colors.HexColor("#e6edf3")
+    C_MUTED   = colors.HexColor("#8892a4")
+    C_BORDER  = colors.HexColor("#1a2035")
     HAS_REPORTLAB = True
 except ImportError:
     HAS_REPORTLAB = False
-
-# ── Colour palette ─────────────────────────────────────────────────
-C_BG      = colors.HexColor("#0b0e17")
-C_DARK    = colors.HexColor("#0e1420")
-C_GREEN   = colors.HexColor("#3fb950")
-C_RED     = colors.HexColor("#f85149")
-C_AMBER   = colors.HexColor("#d29922")
-C_BLUE    = colors.HexColor("#58a6ff")
-C_LIGHT   = colors.HexColor("#e6edf3")
-C_MUTED   = colors.HexColor("#8892a4")
-C_BORDER  = colors.HexColor("#1a2035")
+    # Dummy colour placeholders so module-level code doesn't crash
+    C_BG = C_DARK = C_GREEN = C_RED = C_AMBER = C_BLUE = C_LIGHT = C_MUTED = C_BORDER = None
 
 
 def _text_mission_brief(alert_id, sector, lat, lon, ha, confidence,
