@@ -131,19 +131,25 @@ def build_main_map(df_json: str, layer_mode: str = "deforestation",
         mapbox=dict(
             style="white-bg",
             center=dict(lat=clat, lon=clon), zoom=5,
-            layers=[dict(
-                sourcetype="raster",
-                source=["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"],
-                below="traces"
-            )]),
+            layers=[
+                dict(sourcetype="raster",
+                     source=["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"],
+                     below="traces"),
+                dict(sourcetype="raster",
+                     source=["https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}"],
+                     below="traces")
+            ]),
         mapbox2=dict(
             style="white-bg",
             center=dict(lat=clat, lon=clon), zoom=5,
-            layers=[dict(
-                sourcetype="raster",
-                source=["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"],
-                below="traces"
-            )]))
+            layers=[
+                dict(sourcetype="raster",
+                     source=["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"],
+                     below="traces"),
+                dict(sourcetype="raster",
+                     source=["https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}"],
+                     below="traces")
+            ]))
     for ann in fig.layout.annotations:
         ann.font.update(color="#4a5568", size=10, family=MONO)
     return fig
@@ -196,19 +202,25 @@ def build_forensic_map(lat: float, lon: float, ha: float,
         mapbox=dict(
             style="white-bg",
             center=dict(lat=lat, lon=lon), zoom=9,
-            layers=[dict(
-                sourcetype="raster",
-                source=["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"],
-                below="traces"
-            )]),
+            layers=[
+                dict(sourcetype="raster",
+                     source=["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"],
+                     below="traces"),
+                dict(sourcetype="raster",
+                     source=["https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}"],
+                     below="traces")
+            ]),
         mapbox2=dict(
             style="white-bg",
             center=dict(lat=lat, lon=lon), zoom=9,
-            layers=[dict(
-                sourcetype="raster",
-                source=["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"],
-                below="traces"
-            )]))
+            layers=[
+                dict(sourcetype="raster",
+                     source=["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"],
+                     below="traces"),
+                dict(sourcetype="raster",
+                     source=["https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}"],
+                     below="traces")
+            ]))
     for i, ann in enumerate(fig.layout.annotations):
         ann.font.update(color="#3fb950" if i == 0 else "#f85149",
                         size=10, family=MONO)
