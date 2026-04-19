@@ -14,11 +14,6 @@ from pathlib import Path
 from datetime import datetime, timedelta
 import streamlit as st
 import streamlit.components.v1 as components
-try:
-    from streamlit_autorefresh import st_autorefresh
-    HAS_AUTOREFRESH = True
-except ImportError:
-    HAS_AUTOREFRESH = False
 
 ROOT = Path(__file__).parent.parent
 DASH = Path(__file__).parent
@@ -58,21 +53,6 @@ init_db()
 # ══════════════════════════════════════════════════════════════════
 _css = (DASH / "assets" / "styles.css").read_text(encoding="utf-8")
 st.markdown(f"<style>{_css}</style>", unsafe_allow_html=True)
-
-# ══════════════════════════════════════════════════════════════════
-#  AUTO-REFRESH — forces rerun every 3 s on Streamlit Cloud
-#  streamlit-autorefresh is the only method that works reliably.
-#  Falls back to a hidden meta-refresh iframe if package missing.
-# ══════════════════════════════════════════════════════════════════
-if HAS_AUTOREFRESH:
-    st_autorefresh(interval=3000, key="global_refresh")
-else:
-    # Fallback: inject a hidden iframe with meta-refresh
-    # This reloads the Streamlit WebSocket, triggering a rerun
-    components.html(
-        '<meta http-equiv="refresh" content="3">',
-        height=0
-    )
 
 # ══════════════════════════════════════════════════════════════════
 #  JS: sidebar lock + clock + satellite countdown
@@ -492,15 +472,6 @@ df_json          = alerts.to_json(orient='records')
 # ══════════════════════════════════════════════════════════════════
 #  SIDEBAR
 # ══════════════════════════════════════════════════════════════════
-# ── Satellite countdown (computed server-side — works on Streamlit Cloud) ──
-import time as _sat_time
-_now_sat   = datetime.utcnow()
-_elapsed   = (_now_sat.minute % 47) * 60 + _now_sat.second
-_remain    = 47 * 60 - _elapsed
-_sat_m     = _remain // 60
-_sat_s     = _remain % 60
-sat_countdown = f"T-{_sat_m:02d}:{_sat_s:02d}"
-
 with st.sidebar:
     # ── All static content in ONE components.html — zero Streamlit gaps ──
     components.html(f"""<!DOCTYPE html><html><head>
@@ -568,14 +539,7 @@ html,body{{background:#080b12;overflow:hidden;font-family:'Share Tech Mono',mono
   </div>
 </div>
 
-<!-- SATELLITE — countdown computed server-side by Python -->
-<div style="padding:10px 14px;border-bottom:1px solid #1a2035;">
-  <div class="lbl">◈ NEXT SATELLITE PASS</div>
-  <div style="font-size:26px;font-weight:700;color:#58a6ff;letter-spacing:.04em;line-height:1;"
-    >{sat_countdown}</div>
-  <div style="font-size:7.5px;color:#8899b4;margin-top:5px;">Sentinel-2 · Orbit 145 · MSI-L2A</div>
-  <div style="font-size:7.5px;color:#7d8fa8;margin-top:2px;">Amazon Basin AOI · 1.2M km2</div>
-</div>
+
 
 <!-- DATA LAYER -->
 <div style="padding:9px 14px;border-bottom:1px solid #1a2035;">
@@ -599,7 +563,41 @@ html,body{{background:#080b12;overflow:hidden;font-family:'Share Tech Mono',mono
   <div style="font-size:7px;color:#7d8fa8;letter-spacing:.2em;text-transform:uppercase;">NAVIGATION</div>
 </div>
 
-</body></html>""", height=430, scrolling=False)
+</body></html>""", height=330, scrolling=False)
+
+    # ── Live countdown — its own stable iframe with self-running JS ──
+    components.html("""<!DOCTYPE html><html><head>
+<meta charset="utf-8">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:#080b12;overflow:hidden;width:260px;}
+.wrap{padding:10px 14px 11px;border-bottom:1px solid #1a2035;}
+.lbl{font-family:'Share Tech Mono',monospace;font-size:7.5px;color:#7d8fa8;
+     letter-spacing:.14em;text-transform:uppercase;margin-bottom:6px;}
+.cnt{font-family:'Share Tech Mono',monospace;font-size:26px;font-weight:700;
+     color:#58a6ff;letter-spacing:.04em;line-height:1;}
+.inf{font-family:'Share Tech Mono',monospace;font-size:7.5px;color:#8899b4;margin-top:5px;}
+.inf2{font-family:'Share Tech Mono',monospace;font-size:7.5px;color:#7d8fa8;margin-top:2px;}
+</style></head><body>
+<div class="wrap">
+  <div class="lbl">&#9670; NEXT SATELLITE PASS</div>
+  <div class="cnt" id="cd">T-00:00</div>
+  <div class="inf">Sentinel-2 &middot; Orbit 145 &middot; MSI-L2A</div>
+  <div class="inf2">Amazon Basin AOI &middot; 1.2M km&#178;</div>
+</div>
+<script>
+var ORBIT=47*60;
+function pad(n){return n<10?'0'+n:''+n;}
+function tick(){
+  var now=new Date();
+  var e=(now.getMinutes()%47)*60+now.getSeconds();
+  var r=ORBIT-e;
+  document.getElementById('cd').textContent='T-'+pad(Math.floor(r/60))+':'+pad(r%60);
+}
+tick();
+setInterval(tick,1000);
+</script>
+</body></html>""", height=100, scrolling=False)
 
     # ── Nav radio ───────────────────────────────────────────────────
     NAV_LABELS=["🛰️  Situational Awareness","🔬  Forensic Analysis",
