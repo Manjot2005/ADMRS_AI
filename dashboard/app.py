@@ -3,6 +3,7 @@ ADMRS — Enterprise Dashboard v4.0
 New in v4: SQLite backend · Predictive forecasting · Evidence upload
            Mission brief PDF · Monthly report PDF · Correlation insights
            Modular architecture · Skeleton loaders · GIS deep-links
+FIX v4.0.1: Hamburger sidebar toggle button now works correctly
 """
 import sys, io, base64, time as _time
 import numpy as np, pandas as pd
@@ -56,6 +57,9 @@ st.markdown(f"<style>{_css}</style>", unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════════════════════════
 #  JS: sidebar lock + clock + satellite countdown
+#  FIX: toggleSidebar now uses margin-left instead of display:none
+#       maintainState only enforces CLOSED state (not open)
+#       removeProperty used to cleanly undo transform/visibility
 # ══════════════════════════════════════════════════════════════════
 components.html("""<script>
 (function boot(){
@@ -101,6 +105,8 @@ components.html("""<script>
       '#fw-hamburger.open span:nth-child(1){transform:translateY(7px) rotate(45deg);background:#3fb950;}',
       '#fw-hamburger.open span:nth-child(2){opacity:0;transform:scaleX(0);}',
       '#fw-hamburger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg);background:#3fb950;}',
+      /* Smooth sidebar slide transition */
+      'section[data-testid="stSidebar"]{transition:transform .25s ease, margin-left .25s ease, visibility .25s ease !important;}',
     ].join('');
     doc.head.appendChild(st);
   }
@@ -119,7 +125,6 @@ components.html("""<script>
 
   // ── Nuke every Streamlit arrow button ────────────────────────
   function nukeArrows(){
-    // 1. Kill by data-testid (all known variants)
     [
       '[data-testid="collapsedControl"]',
       '[data-testid="stSidebarCollapsedControl"]',
@@ -129,7 +134,6 @@ components.html("""<script>
       doc.querySelectorAll(sel).forEach(kill);
     });
 
-    // 2. Kill by aria-label
     doc.querySelectorAll('button[aria-label]').forEach(function(btn){
       var lbl = (btn.getAttribute('aria-label')||'').toLowerCase();
       if(lbl.includes('sidebar')||lbl.includes('collapse')||lbl.includes('close sidebar')){
@@ -137,45 +141,26 @@ components.html("""<script>
       }
     });
 
-    // 3. Nuclear: walk EVERY element inside the sidebar and kill
-    //    anything that looks like the toggle arrow (small, near top-right)
     var sb = doc.querySelector('section[data-testid="stSidebar"]');
     if(sb){
       var sbRect = sb.getBoundingClientRect();
-      // Kill the collapsedControl wrapper div (direct child of sidebar)
       sb.querySelectorAll('[data-testid="collapsedControl"]').forEach(kill);
-      // Kill any button that is pinned to the right edge of the sidebar
       sb.querySelectorAll('button, div[role="button"]').forEach(function(el){
         var r = el.getBoundingClientRect();
         var rightEdge = sbRect.right;
-        // Arrow is within 40px of sidebar's right edge and top 200px
-        if(r.top < sbRect.top + 200 && r.right > rightEdge - 50){
-          kill(el);
-        }
-        // Also kill any tiny button (arrow is ~28x28px)
-        if(r.width > 0 && r.width < 48 && r.height < 48 && r.top < sbRect.top + 200){
-          kill(el);
-        }
+        if(r.top < sbRect.top + 200 && r.right > rightEdge - 50){ kill(el); }
+        if(r.width > 0 && r.width < 48 && r.height < 48 && r.top < sbRect.top + 200){ kill(el); }
       });
-      // Kill the wrapper div that Streamlit places at top of sidebar for the arrow
-      // It's always the FIRST child div of the sidebar section
       var firstChild = sb.firstElementChild;
       if(firstChild){
         var fc = firstChild.firstElementChild;
-        if(fc && fc.tagName !== 'DIV') { /* skip */ }
-        else if(fc){
-          // If first grandchild contains a button it's the arrow wrapper
-          if(fc.querySelector('button')){ kill(fc); }
-        }
+        if(fc && fc.querySelector && fc.querySelector('button')){ kill(fc); }
       }
     }
 
-    // 4. Kill by className pattern
     doc.querySelectorAll('*').forEach(function(el){
       var c = (typeof el.className === 'string') ? el.className : '';
-      if(c.match(/collapsed|SidebarToggle|sidebarButton|sidebar-toggle/i)){
-        kill(el);
-      }
+      if(c.match(/collapsed|SidebarToggle|sidebarButton|sidebar-toggle/i)){ kill(el); }
     });
   }
 
@@ -191,30 +176,44 @@ components.html("""<script>
     el.style.setProperty('pointer-events','none',  'important');
   }
 
-  // ── Toggle sidebar ────────────────────────────────────────────
+  // ── FIX: Toggle sidebar using transform + margin-left only ────
+  // Avoids display:none which breaks Streamlit's layout engine.
+  // Uses removeProperty to cleanly undo styles when re-opening.
   function toggleSidebar(){
     var sb  = doc.querySelector('section[data-testid="stSidebar"]');
     var hb  = doc.getElementById('fw-hamburger');
     if(!sb || !hb) return;
     sidebarOpen = !sidebarOpen;
     if(sidebarOpen){
-      sb.style.cssText += ';transform:none!important;visibility:visible!important;display:block!important;margin-left:0!important;';
+      // Re-open: remove all forced-closed styles cleanly
+      sb.style.removeProperty('transform');
+      sb.style.removeProperty('visibility');
+      sb.style.removeProperty('margin-left');
+      sb.style.removeProperty('pointer-events');
       hb.classList.add('open');
     } else {
-      sb.style.transform  = 'translateX(-270px)';
-      sb.style.visibility = 'hidden';
-      sb.style.display    = 'none';
+      // Close: slide out to the left, hide, disable interaction
+      sb.style.setProperty('transform',      'translateX(-280px)', 'important');
+      sb.style.setProperty('visibility',     'hidden',             'important');
+      sb.style.setProperty('margin-left',    '-280px',             'important');
+      sb.style.setProperty('pointer-events', 'none',               'important');
       hb.classList.remove('open');
     }
   }
 
-  // ── Maintain sidebar state on every Streamlit rerender ────────
+  // ── FIX: maintainState only re-enforces CLOSED state ─────────
+  // Previously it always forced the sidebar open, fighting the toggle.
   function maintainState(){
     var sb = doc.querySelector('section[data-testid="stSidebar"]');
-    if(sb && sidebarOpen){
-      sb.style.setProperty('transform','none','important');
-      sb.style.setProperty('visibility','visible','important');
-      sb.style.setProperty('display','block','important');
+    if(sb){
+      if(!sidebarOpen){
+        // Re-enforce closed state in case Streamlit re-renders sidebar
+        sb.style.setProperty('transform',      'translateX(-280px)', 'important');
+        sb.style.setProperty('visibility',     'hidden',             'important');
+        sb.style.setProperty('margin-left',    '-280px',             'important');
+        sb.style.setProperty('pointer-events', 'none',               'important');
+      }
+      // When open: do NOT force any styles — let Streamlit own the layout
     }
     nukeArrows();
   }
@@ -241,7 +240,6 @@ components.html("""<script>
           if(t && (t.includes('collapsed') || t.includes('Collapsed') || t.includes('header'))){
             needsNuke = true;
           }
-          // Also check children
           if(node.querySelector){
             if(node.querySelector('[data-testid*="collapsed"],[data-testid*="header"]')){
               needsNuke = true;
@@ -258,7 +256,6 @@ components.html("""<script>
   setInterval(function(){
     var el = doc.getElementById('fw-clock');
     if(el){ var n=new Date(); el.textContent=n.toISOString().replace('T',' ').slice(0,19)+' UTC'; }
-    // sat countdown computed server-side in Python
   },1000);
 })();
 </script>""", height=0)
@@ -473,7 +470,6 @@ df_json          = alerts.to_json(orient='records')
 #  SIDEBAR
 # ══════════════════════════════════════════════════════════════════
 with st.sidebar:
-    # ── All static content in ONE components.html — zero Streamlit gaps ──
     components.html(f"""<!DOCTYPE html><html><head>
 <meta charset="utf-8">
 <style>
@@ -539,8 +535,6 @@ html,body{{background:#080b12;overflow:hidden;font-family:'Share Tech Mono',mono
   </div>
 </div>
 
-
-
 <!-- DATA LAYER -->
 <div style="padding:9px 14px;border-bottom:1px solid #1a2035;">
   <div class="lbl">◈ DATA LAYER STATUS</div>
@@ -565,7 +559,7 @@ html,body{{background:#080b12;overflow:hidden;font-family:'Share Tech Mono',mono
 
 </body></html>""", height=330, scrolling=False)
 
-    # ── Live countdown — its own stable iframe with self-running JS ──
+    # ── Live countdown ───────────────────────────────────────────
     components.html("""<!DOCTYPE html><html><head>
 <meta charset="utf-8">
 <style>
@@ -599,7 +593,7 @@ setInterval(tick,1000);
 </script>
 </body></html>""", height=100, scrolling=False)
 
-    # ── Nav radio ───────────────────────────────────────────────────
+    # ── Nav radio ────────────────────────────────────────────────
     NAV_LABELS=["🛰️  Situational Awareness","🔬  Forensic Analysis",
                 "📊  NDVI Analysis","📈  Predictive Risk",
                 "🚒  Field Dispatch","📋  Monthly Report"]
@@ -609,7 +603,6 @@ setInterval(tick,1000);
     if NAV_PAGES[NAV_LABELS.index(choice)]!=st.session_state.page:
         st.session_state.page=NAV_PAGES[NAV_LABELS.index(choice)]; st.rerun()
 
-    # ── System status (single markdown block) ───────────────────────
     st.markdown(f'''
     <div style="border-top:1px solid #1a2035;">
       <div style="padding:8px 14px 5px;">
@@ -672,7 +665,6 @@ if PAGE=="Situational":
     kpi_card(c3,"Alert Confidence",f"{avg_conf:.0f}%","U-Net v3.1","#3fb950")
     kpi_card(c4,"Hotspot Clusters",str(n_crit),"14 detections","#f85149","critical")
 
-    # Layer toggle
     st.markdown(f'<div style="padding:4px 4px 0;"><span style="{MONO}font-size:9px;'
                 f'color:#7d8fa8;letter-spacing:.12em;">◈ MAP LAYER:</span></div>',
                 unsafe_allow_html=True)
@@ -717,7 +709,6 @@ if PAGE=="Situational":
     st.plotly_chart(build_global_map(n_active),use_container_width=True,config={"displayModeBar":False})
 
 
-
 # ══════════════════════════════════════════════════════════════════
 #  PAGE 2 — FORENSIC ANALYSIS
 # ══════════════════════════════════════════════════════════════════
@@ -732,7 +723,6 @@ elif PAGE=="Forensic":
 
     left_col,mid_col,right_col=st.columns([1,3,1.2],gap="small")
 
-    # Alert list
     with left_col:
         st.markdown(f'<div style="background:#0e1420;border-bottom:1px solid #1a2035;padding:10px 14px;">'
             f'<span style="{MONO}font-size:9px;color:#7d8fa8;letter-spacing:.12em;">◈ ALERTS</span></div>',
@@ -753,7 +743,6 @@ elif PAGE=="Forensic":
             if st.button("▶ Load",key=f"sel_{idx}",use_container_width=True):
                 st.session_state.sel_idx=idx; st.rerun()
 
-    # Map + AI summary + GIS links
     with mid_col:
         st.markdown(f'<div style="background:#0e1420;border:1px solid #1a2035;'
             f'border-radius:4px 4px 0 0;padding:10px 15px;'
@@ -767,7 +756,6 @@ elif PAGE=="Forensic":
         st.plotly_chart(build_forensic_map(lat,lon,ha,sel["alert_id"],dates[tl]),
                         use_container_width=True,config={"displayModeBar":False})
 
-        # GIS deep-links
         gmap=f"https://maps.google.com/?q={lat},{lon}"
         gee ="https://code.earthengine.google.com/"
         st.markdown(f"""
@@ -781,7 +769,6 @@ elif PAGE=="Forensic":
           <span style="{MONO}font-size:8px;color:#7d8fa8;">CRS: WGS84 EPSG:4326</span>
         </div>""", unsafe_allow_html=True)
 
-        # AI Summary
         risk="CRITICAL" if ha>6 else "HIGH"
         st.markdown(f"""
         <div style="background:#0e1420;border:1px solid #3fb95044;border-left:3px solid #3fb950;
@@ -798,7 +785,6 @@ elif PAGE=="Forensic":
           </div>
         </div>""", unsafe_allow_html=True)
 
-    # Right: gauge + saliency + validation + evidence upload + mission brief
     with right_col:
         st.plotly_chart(build_confidence_gauge(conf),use_container_width=True,
                         config={"displayModeBar":False})
@@ -809,7 +795,6 @@ elif PAGE=="Forensic":
             f'<img src="data:image/png;base64,{sal}" style="width:100%;border-radius:3px;"/></div>',
             unsafe_allow_html=True)
 
-        # Validation
         st.markdown('<div style="height:4px"></div>',unsafe_allow_html=True)
         if sel["alert_id"] not in valid_ids:
             notes=st.text_input("Notes",key="vnotes",placeholder="Cloud shadow? Fire scar?",
@@ -828,7 +813,6 @@ elif PAGE=="Forensic":
                 f'letter-spacing:.1em;color:{vc};">✓ {str(v["verdict"]).upper()}</div>',
                 unsafe_allow_html=True)
 
-        # Evidence upload
         st.markdown('<div style="height:6px"></div>',unsafe_allow_html=True)
         with st.expander("📷 Upload Field Evidence"):
             ranger_sel=st.selectbox("Ranger",RANGERS,key="ev_ranger")
@@ -855,7 +839,6 @@ elif PAGE=="Forensic":
                         file_name=str(ev["filename"]),key=f"ev_dl_{ev['id']}",
                         use_container_width=True)
 
-        # Mission brief PDF
         st.markdown('<div style="height:4px"></div>',unsafe_allow_html=True)
         ranger_brief=st.selectbox("Ranger for Brief",RANGERS,key="brief_ranger")
         if st.button("📄 Generate Mission Brief",key="gen_brief",use_container_width=True):
@@ -867,12 +850,11 @@ elif PAGE=="Forensic":
                 mime=f"application/{ext}",use_container_width=True)
 
 # ══════════════════════════════════════════════════════════════════
-#  PAGE 3 — NDVI ANALYSIS & CLASSIFICATION  (Synopsis alignment)
+#  PAGE 3 — NDVI ANALYSIS & CLASSIFICATION
 # ══════════════════════════════════════════════════════════════════
 elif PAGE=="NDVI":
     st.markdown('<div style="height:6px"></div>', unsafe_allow_html=True)
 
-    # ── Synopsis §1.3 formula banner ──────────────────────────────
     st.markdown(f'''
     <div style="background:#0e1420;border:1px solid #3fb95044;border-left:3px solid #3fb950;
       border-radius:4px;padding:12px 18px;margin-bottom:8px;">
@@ -919,7 +901,6 @@ elif PAGE=="NDVI":
       </div>
     </div>''', unsafe_allow_html=True)
 
-    # ── NDVI class table (Synopsis §2.4) ──────────────────────────
     st.markdown(f'''
     <div style="background:#080b12;border:1px solid #1a2035;border-radius:4px;
       padding:10px 16px;margin-bottom:8px;">
@@ -949,7 +930,6 @@ elif PAGE=="NDVI":
       </div>
     </div>''', unsafe_allow_html=True)
 
-    # ── Row 1: NDVI Heatmap + Binary Map ─────────────────────────
     section_label("NDVI HEATMAP  (Sentinel-2 Simulated AOI · 20×20 Pixels · NDVI = (NIR−RED)/(NIR+RED))")
     hm_col, bin_col = st.columns(2, gap="small")
     with hm_col:
@@ -974,10 +954,7 @@ elif PAGE=="NDVI":
       </span>
     </div>''', unsafe_allow_html=True)
 
-    # ── Row 2: Classification distribution + Confusion matrix ──────
     cls_col, cm_col = st.columns([3, 2], gap="small")
-
-    # Compute NDVI values for current alerts
     ndvi_vals = [round(0.72 - float(ha) * 0.03, 3) for ha in alerts["new_loss_ha"]]
 
     with cls_col:
@@ -989,7 +966,6 @@ elif PAGE=="NDVI":
         section_label("CONFUSION MATRIX  (Synopsis §3.4 · OA=85% · κ=0.78)")
         st.plotly_chart(build_confusion_matrix(), use_container_width=True,
                         config={"displayModeBar": False})
-        # Accuracy metrics block
         st.markdown(f'''
         <div style="background:#0e1420;border:1px solid #1a2035;border-radius:4px;
           padding:10px 14px;margin-top:4px;">
@@ -1009,7 +985,6 @@ elif PAGE=="NDVI":
           </div>
         </div>''', unsafe_allow_html=True)
 
-    # ── Row 3: Tech stack + GeoTIFF export ─────────────────────────
     tech_col, geo_col = st.columns([3, 2], gap="small")
     with tech_col:
         section_label("TECHNOLOGY STACK  (Synopsis §1.6)")
@@ -1035,7 +1010,6 @@ elif PAGE=="NDVI":
 
     with geo_col:
         section_label("GEOTIFF EXPORT  (Synopsis §1.4 · §3.1)")
-        # GeoTIFF metadata panel
         st.markdown(f'''
         <div style="background:#0e1420;border:1px solid #1a4028;border-left:3px solid #3fb950;
           border-radius:4px;padding:12px 16px;">
@@ -1059,7 +1033,6 @@ elif PAGE=="NDVI":
         </div>''', unsafe_allow_html=True)
 
         st.markdown("<div style='height:6px'></div>", unsafe_allow_html=True)
-        # Generate a minimal GeoTIFF-like CSV export (actual rasterio not available in demo)
         rng_e = np.random.default_rng(42)
         H, W = 20, 20
         nir = np.clip(rng_e.normal(0.45, 0.15, (H, W)), 0.01, 1.0)
@@ -1096,9 +1069,8 @@ elif PAGE=="NDVI":
             unsafe_allow_html=True)
 
 
-
 # ══════════════════════════════════════════════════════════════════
-#  PAGE 3 — PREDICTIVE RISK
+#  PAGE 4 — PREDICTIVE RISK
 # ══════════════════════════════════════════════════════════════════
 elif PAGE=="Predictive":
     st.markdown('<div style="height:6px"></div>',unsafe_allow_html=True)
@@ -1106,7 +1078,6 @@ elif PAGE=="Predictive":
     hist_df =get_historical_series(52)
     insights=get_correlation_insights(hist_df)
 
-    # KPI row
     fk1,fk2,fk3,fk4=st.columns(4,gap="small")
     td=forecast["trend_dir"]
     kpi_card(fk1,"30-Day Forecast",f"{forecast['total_30d']:.0f}ha","total loss estimate","#f85149")
@@ -1165,7 +1136,7 @@ elif PAGE=="Predictive":
     </div>""", unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════════════════════════
-#  PAGE 4 — FIELD DISPATCH
+#  PAGE 5 — FIELD DISPATCH
 # ══════════════════════════════════════════════════════════════════
 elif PAGE=="Field":
     dispatched_n=int((dispatch_df["status"]=="Dispatched").sum()) if len(dispatch_df)>0 else 0
@@ -1310,7 +1281,7 @@ elif PAGE=="Field":
     </div>""", unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════════════════════════
-#  PAGE 5 — MONTHLY REPORT
+#  PAGE 6 — MONTHLY REPORT
 # ══════════════════════════════════════════════════════════════════
 elif PAGE=="Report":
     st.markdown('<div style="height:6px"></div>',unsafe_allow_html=True)
