@@ -14,6 +14,11 @@ from pathlib import Path
 from datetime import datetime, timedelta
 import streamlit as st
 import streamlit.components.v1 as components
+try:
+    from streamlit_autorefresh import st_autorefresh
+    HAS_AUTOREFRESH = True
+except ImportError:
+    HAS_AUTOREFRESH = False
 
 ROOT = Path(__file__).parent.parent
 DASH = Path(__file__).parent
@@ -53,6 +58,21 @@ init_db()
 # ══════════════════════════════════════════════════════════════════
 _css = (DASH / "assets" / "styles.css").read_text(encoding="utf-8")
 st.markdown(f"<style>{_css}</style>", unsafe_allow_html=True)
+
+# ══════════════════════════════════════════════════════════════════
+#  AUTO-REFRESH — forces rerun every 3 s on Streamlit Cloud
+#  streamlit-autorefresh is the only method that works reliably.
+#  Falls back to a hidden meta-refresh iframe if package missing.
+# ══════════════════════════════════════════════════════════════════
+if HAS_AUTOREFRESH:
+    st_autorefresh(interval=3000, key="global_refresh")
+else:
+    # Fallback: inject a hidden iframe with meta-refresh
+    # This reloads the Streamlit WebSocket, triggering a rerun
+    components.html(
+        '<meta http-equiv="refresh" content="3">',
+        height=0
+    )
 
 # ══════════════════════════════════════════════════════════════════
 #  JS: sidebar lock + clock + satellite countdown
@@ -1396,13 +1416,3 @@ elif PAGE=="Report":
                 annotations=[dict(text=f"{len(valid_df)}<br>total",
                     font=dict(size=11,color="#e6edf3"),showarrow=False)])
             st.plotly_chart(fig3,use_container_width=True,config={"displayModeBar":False})
-
-# ══════════════════════════════════════════════════════════════════
-#  GLOBAL AUTO-RERUN — updates satellite countdown on ALL pages
-#  every 3 seconds without any user interaction
-# ══════════════════════════════════════════════════════════════════
-_ts = int(_time.time() / 3)
-if st.session_state._last_tick != _ts:
-    st.session_state._last_tick = _ts
-    _time.sleep(0.04)
-    st.rerun()
