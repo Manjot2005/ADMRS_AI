@@ -669,7 +669,7 @@ if PAGE=="Situational":
                 f'color:#7d8fa8;letter-spacing:.12em;">◈ MAP LAYER:</span></div>',
                 unsafe_allow_html=True)
     l1,l2,l3,l4,_=st.columns([1,1,1,1,4],gap="small")
-    for co,lbl,key in [(l1,"🌳 Deforestation","deforestation"),(l2,"📊 NDVI","ndvi"),
+    for co,lbl,key in [(l1,"Deforestation","deforestation"),(l2,"📊 NDVI","ndvi"),
                         (l3,"🌡 Thermal","thermal"),(l4,"🔥 Heatmap","heatmap")]:
         active=(st.session_state.layer==key)
         co.markdown(f'<div class="{"active-btn" if active else "verify-btn"}">', unsafe_allow_html=True)
