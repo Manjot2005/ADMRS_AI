@@ -55,5 +55,3 @@ Pillow
 opencv-python
 imageio
 imageio-ffmpeg
-
-streamlit-autorefresh>=1.0.1
