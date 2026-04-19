@@ -698,10 +698,7 @@ if PAGE=="Situational":
     section_label("GLOBAL FOREST MONITORING NETWORK")
     st.plotly_chart(build_global_map(n_active),use_container_width=True,config={"displayModeBar":False})
 
-    # Auto-rerun every 3 s
-    ts=int(_time.time()/3)
-    if st.session_state._last_tick!=ts:
-        st.session_state._last_tick=ts; _time.sleep(0.04); st.rerun()
+
 
 # ══════════════════════════════════════════════════════════════════
 #  PAGE 2 — FORENSIC ANALYSIS
@@ -1399,3 +1396,13 @@ elif PAGE=="Report":
                 annotations=[dict(text=f"{len(valid_df)}<br>total",
                     font=dict(size=11,color="#e6edf3"),showarrow=False)])
             st.plotly_chart(fig3,use_container_width=True,config={"displayModeBar":False})
+
+# ══════════════════════════════════════════════════════════════════
+#  GLOBAL AUTO-RERUN — updates satellite countdown on ALL pages
+#  every 3 seconds without any user interaction
+# ══════════════════════════════════════════════════════════════════
+_ts = int(_time.time() / 3)
+if st.session_state._last_tick != _ts:
+    st.session_state._last_tick = _ts
+    _time.sleep(0.04)
+    st.rerun()
